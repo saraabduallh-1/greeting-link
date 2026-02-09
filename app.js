@@ -67,6 +67,78 @@ function isArabic(text) {
  */
 function fitFontSize(text, maxWidth, baseSize, fontFamily) {
   let size = baseSize;
+/*************************************************
+  Greeting Link - Simple Template + Name Generator
+  Tech: Vanilla JS + Canvas
+  Output: Download PNG (client-side)
+**************************************************/
+
+// ====== 1) عناصر الواجهة (DOM) ======
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const templateSelect = document.getElementById("templateSelect");
+const nameInput = document.getElementById("nameInput");
+const alignSelect = document.getElementById("alignSelect");
+const downloadBtn = document.getElementById("downloadBtn");
+const copyLinkBtn = document.getElementById("copyLinkBtn");
+const statusEl = document.getElementById("status");
+
+// ====== 2) إعدادات القوالب (عدّلي مكان الاسم هنا) ======
+// x,y = مكان الاسم في القالب
+// maxWidth = أقصى عرض للاسم (إذا زاد يصغّر حجم الخط تلقائيًا)
+// baseFontSize = حجم الخط الافتراضي قبل التصغير
+// color = لون الاسم
+const TEMPLATES = {
+  template1: {
+    src: "./assets/template1.png",
+    width: 1080,
+    height: 1920,
+    textBox: { x: 540, y: 1320, maxWidth: 820 },
+    baseFontSize: 82,
+    color: "#ffffff"
+  },
+  template2: {
+    src: "./assets/template2.png",
+    width: 1080,
+    height: 1350,
+    textBox: { x: 540, y: 900, maxWidth: 820 },
+    baseFontSize: 72,
+    color: "#111111"
+  }
+};
+// ====== 3) تحميل صورة القالب ======
+let bgImage = null;
+
+/**
+ * يحمل صورة القالب المختار ويخزنها في bgImage
+ */
+function loadTemplate(templateKey) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      bgImage = img;
+      resolve();
+    };
+    img.onerror = () => reject(new Error("Failed to load template image"));
+    img.src = TEMPLATES[templateKey].src;
+  });
+}
+
+// ====== 4) أدوات مساعدة ======
+
+/**
+ * يحدد هل النص عربي (لضبط اتجاه الكتابة)
+ */
+function isArabic(text) {
+  return /[\u0600-\u06FF]/.test(text);
+}
+
+/**
+ * يصغر حجم الخط تلقائيًا إذا الاسم طويل ويطلع خارج المساحة
+ */
+function fitFontSize(text, maxWidth, baseSize, fontFamily) {
+  let size = baseSize;
   ctx.font = `700 ${size}px ${fontFamily}`;
 
   while (ctx.measureText(text).width > maxWidth && size > 18) {
@@ -108,6 +180,12 @@ function updateUrlParams({ t, name, align }) {
  */
 function safeName(name) {
   return (name || "").trim().slice(0, 50);
+}
+
+function resizeCanvas(templateKey) {
+  const cfg = TEMPLATES[templateKey];
+  canvas.width = cfg.width;
+  canvas.height = cfg.height;
 }
 
 // ====== 5) الرسم على الـCanvas ======
@@ -223,7 +301,9 @@ async function init() {
   if (params.name) nameInput.value = params.name;
   if (params.align) alignSelect.value = params.align;
 
+  
   // حمّل القالب المختار وارسم
+  resizeCanvas(templateSelect.value);
   await loadTemplate(templateSelect.value);
   draw();
 
@@ -233,6 +313,7 @@ async function init() {
 
 // ====== 10) أحداث المستخدم (Event Listeners) ======
 templateSelect.addEventListener("change", async () => {
+  resizeCanvas(templateSelect.value);
   await loadTemplate(templateSelect.value);
   draw();
   syncUrl();
